@@ -3,10 +3,9 @@ const HID = require('node-hid')
 const path = require('path')
 const iconPath = path.join(__dirname, 'battery-fill.ico')
 
-let devices = HID.devices()
-let steelseriesDevices = devices.filter(device => device.manufacturer == 'SteelSeries ' && device.usage !== 1)
+function readDeviceBattery() {
+    let devices = HID.devices().filter(device => device.manufacturer && device.manufacturer.toUpperCase().includes('STEELSERIES') && device.usage !== 1)
 
-function readDeviceBattery(devices) {
     let text = ''
     if (devices.length != 0) {
         devices.forEach((target) => {
@@ -51,13 +50,13 @@ app.on('ready', function () {
         if (update != true) {
             update = true
             console.log(update)
-            let tooltip = readDeviceBattery(steelseriesDevices)
+            let tooltip = readDeviceBattery()
             tray.setToolTip(tooltip)
 
             setTimeout(function() {
                 update = false
                 console.log(update)
-            }, 10 * 1000);
+            }, 5 * 1000);
         }
     })
 })
