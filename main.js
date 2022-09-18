@@ -3,6 +3,8 @@ const HID = require('node-hid')
 const path = require('path')
 const iconPath = path.join(__dirname, 'battery-fill.ico')
 
+if (require('electron-squirrel-startup')) return;
+
 function readDeviceBattery() {
     let devices = HID.devices().filter(device => device.manufacturer && device.manufacturer.toUpperCase().includes('STEELSERIES') && device.usage !== 1)
 
@@ -20,7 +22,7 @@ function readDeviceBattery() {
                 }
                 if (devices.length > 1) {
                     text += `\n`
-                }    
+                }
                 device.close()
             } catch (error) {
                 console.log('Error while getting battery percentage: ', error)
@@ -53,7 +55,7 @@ app.on('ready', function () {
             let tooltip = readDeviceBattery()
             tray.setToolTip(tooltip)
 
-            setTimeout(function() {
+            setTimeout(function () {
                 update = false
                 console.log(update)
             }, 5 * 1000);
