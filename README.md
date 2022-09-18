@@ -5,6 +5,11 @@ I've bought an Arctis 7 headset on Cyber Monday a while back, and noticed that t
 
 Currently only tested on Windows 10 with an Arctis 7 headset. If you have other devices or operating system, contact me to expand this.
 
+#  [releases](https://github.com/mtadin/steelseries-wireless-battery-tray/releases)
+Currently only a Windows .zip is available. Unzip it at a location of your choice and [add the .exe to your startup folder](https://support.microsoft.com/en-us/windows/add-an-app-to-run-automatically-at-startup-in-windows-10-150da165-dcd9-7230-517b-cf3c295d89dd)
+
+Someday when I rewrite the app and add tests I will also add releases for other operating systems. Someday.
+
 # installation
 Requires [node.js](https://nodejs.org/en/) installed on your computer.
 
