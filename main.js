@@ -38,7 +38,7 @@ const readDeviceData = () => {
             if (deviceData[3] > 0) {
               deviceList.set(product, `${String(deviceData[3])}%`);
             } else {
-              deviceList.set(product, `Disconnected`);
+              deviceList.set(product, `xx`);
             }
           } catch (e) {
             console.error("ERROR while writing data:", e);
@@ -66,7 +66,9 @@ const buildContextMenu = (tray) => {
         const selected = deviceToDisplay === product;
 
         return {
-          label: `${selected ? "> " : ""}${product}: ${value}`,
+          label: `${selected ? "> " : ""}${product}: ${
+            value == "xx" ? "Disconnected" : value
+          }`,
           click: () => {
             store.set("display", product);
             buildContextMenu(tray);
