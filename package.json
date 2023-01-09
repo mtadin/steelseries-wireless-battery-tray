@@ -1,7 +1,7 @@
 {
   "name": "steelseries-wireless-battery-tray",
-  "version": "1.0.0",
-  "description": "A system tray (notification area) app that displays battery percentages of Steelseries wireless devices.",
+  "version": "2.0.0-beta",
+  "description": "A system tray (notification area) app that displays battery percentages of Steelseries wireless headphones.",
   "main": "main.js",
   "scripts": {
     "start": "electron-forge start",
@@ -22,18 +22,18 @@
   "author": "mtadin",
   "license": "MIT",
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.54",
-    "@electron-forge/maker-deb": "^6.0.0-beta.54",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
-    "@electron-forge/maker-zip": "^6.0.0-beta.54",
-    "@electron-forge/publisher-github": "^6.0.0-beta.66",
-    "electron": "^18.3.7"
+    "@electron-forge/cli": "^6.0.4",
+    "@electron-forge/maker-deb": "^6.0.4",
+    "@electron-forge/maker-rpm": "^6.0.4",
+    "@electron-forge/maker-zip": "^6.0.4",
+    "@electron-forge/publisher-github": "^6.0.4",
+    "electron": "^22.0.0"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.0",
-    "node-abi": "^3.24.0",
-    "node-hid": "^2.1.1",
+    "electron-store": "^8.1.0",
+    "jimp": "^0.16.2",
+    "node-abi": "^3.30.0",
+    "node-hid": "^2.1.2",
     "trim-newlines": "^4.0.2"
   },
   "config": {

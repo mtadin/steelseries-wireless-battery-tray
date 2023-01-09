@@ -1,64 +1,112 @@
-const { app, Menu, Tray } = require('electron')
-const HID = require('node-hid')
-const path = require('path')
-const iconPath = path.join(__dirname, 'battery-fill.ico')
+const { app, Menu, Tray } = require("electron");
+const fs = require("fs");
+const HID = require("node-hid");
+const Jimp = require("jimp");
+const path = require("path");
+const Store = require("electron-store");
 
-if (require('electron-squirrel-startup')) return;
+const store = new Store();
+const isMac = process.platform === "darwin";
 
-function readDeviceBattery() {
-    let devices = HID.devices().filter(device => device.manufacturer && device.manufacturer.toUpperCase().includes('STEELSERIES') && device.usage !== 1)
+const fontPath = path.join(__dirname, "Fipps-Regular.fnt");
 
-    let text = ''
-    if (devices.length != 0) {
-        devices.forEach((target) => {
-            try {
-                let device = new HID.HID(target.path)
-                device.write([0x06, 0x18])
-                let deviceData = device.readSync()
-                if (deviceData[2] != 0) {
-                    text += `${target.product}: ${deviceData[2]}%`
-                } else {
-                    text += `${target.product}: Disconnected or empty`
-                }
-                if (devices.length > 1) {
-                    text += `\n`
-                }
-                device.close()
-            } catch (error) {
-                console.log('Error while getting battery percentage: ', error)
+const iconPath = path.join(__dirname, "battery-fill.png");
+const editedIconPath = path.join(__dirname, "edited-icon.png");
+
+let deviceList = new Map();
+
+const readDeviceData = () => {
+  const devices = HID.devices().filter(
+    (device) =>
+      device.manufacturer &&
+      device.manufacturer.toUpperCase().includes("STEELSERIES") &&
+      device.usage !== 1
+  );
+
+  if (devices.length > 0) {
+    devices.forEach(({ path, product }) => {
+      if (path) {
+        try {
+          const device = new HID.HID(path);
+
+          let deviceData = [];
+
+          try {
+            device.write([0x06, 0x18]);
+            deviceData = device.readSync();
+
+            if (deviceData[2] > 0) {
+              deviceList.set(product, `${String(deviceData[2])}%`);
+            } else {
+              deviceList.set(product, `Disconnected`);
             }
-        })
-        return text
-    } else {
-        text = 'No devices detected.'
-        return text
-    }
-}
+          } catch (e) {
+            console.error("ERROR while writing data:", e);
+          }
 
-let tray = null
-app.on('ready', function () {
-    tray = new Tray(iconPath)
-
-    const contextMenu = Menu.buildFromTemplate([
-        {
-            label: 'Exit',
-            role: 'quit'
+          device.close();
+        } catch (error) {
+          console.error("Error while getting battery percentage: ", error);
         }
+      }
+    });
+  } else {
+    deviceList.clear();
+    deviceList.set("No devices detected.", "");
+  }
+};
+
+const buildContextMenu = (tray) => {
+  const deviceToDisplay =
+    store.get("display") || deviceList.keys().next().value;
+
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      ...Array.from(deviceList, ([product, value]) => {
+        const selected = deviceToDisplay === product;
+
+        return {
+          label: `${selected ? "> " : ""}${product}: ${value}`,
+          click: () => {
+            store.set("display", product);
+            buildContextMenu(tray);
+          },
+        };
+      }),
+      {
+        label: "Quit",
+        role: isMac ? "close" : "quit",
+      },
     ])
-    tray.setContextMenu(contextMenu)
+  );
+};
 
-    let update = false
-    tray.on('mouse-move', function () {
-        if (update != true) {
-            update = true
-            console.log(update)
-            let tooltip = readDeviceBattery()
-            tray.setToolTip(tooltip)
+const updateTrayIcon = async () => {
+  const deviceToDisplay =
+    store.get("display") || deviceList.keys().next().value;
 
-            setTimeout(function () {
-                update = false
-                console.log(update)
-            }, 5 * 1000);
-        }
-    })
-})
+  await Jimp.read(iconPath, (error, image) => {
+    if (error) throw error;
+
+    Jimp.loadFont(fontPath).then((font) => {
+      image.print(font, 4, 4, deviceList.get(deviceToDisplay));
+      image.write("edited-icon.png");
+    });
+  });
+};
+
+const mainFunction = (tray) => {
+  readDeviceData();
+  buildContextMenu(tray);
+  updateTrayIcon();
+  tray.setImage(fs.existsSync(editedIconPath) ? editedIconPath : iconPath);
+};
+
+app.on("ready", async () => {
+  const tray = new Tray(iconPath);
+  mainFunction(tray);
+
+  setInterval(() => {
+    mainFunction(tray);
+  }, 1000);
+});
