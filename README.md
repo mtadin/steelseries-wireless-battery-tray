@@ -38,6 +38,6 @@ npm run make
 
 When it finishes compiling, navigate to the 'out/steelseries-wireless-battery-tray' folder and run the .exe, or [add it to your startup folder](https://support.microsoft.com/en-us/windows/add-an-app-to-run-automatically-at-startup-in-windows-10-150da165-dcd9-7230-517b-cf3c295d89dd).
 
-The battery icon should appear in your system tray, and hovering over it should display a tooltip containing the battery percentages of the devices. Right clicking the icon gives you the option to exit and turn off the application.
+The battery icon should appear in your system tray, and it should display a tooltip containing the battery percentage of your connected device. If you have multiple devices, clicking on the icon brings up a menu which allows you to choose which device should be displayed, or to exit and turn off the application.
 
 ![example](https://github.com/mtadin/steelseries-wireless-battery-tray/blob/master/example.png?raw=true)
