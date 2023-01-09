@@ -2,7 +2,7 @@
 
 A system tray (or notification area) app that displays battery percentages of Steelseries wireless devices.
 
-I've bought an Arctis 7 headset on Cyber Monday a while back, and noticed that there is no way to get the actual battery percentage of the headset, except for a vague icon or the LED on the underside of the headset. So, as a little project I made this system tray application that should display the battery percentages of Steelseries wireless headsets when you hover you mouse over it.
+I've bought an Arctis 7 headset on Cyber Monday a while back, and noticed that there is no way to get the actual battery percentage of the headset, except for a vague icon or the LED on the underside of the headset. So, as a little project I made this system tray application that displays the battery percentages of Steelseries wireless headsets on it.
 
 Currently only tested on Windows 10 with an Arctis 7 headset. If you have other devices or operating system, contact me to expand this.
 
