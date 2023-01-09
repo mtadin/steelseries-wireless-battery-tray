@@ -1,6 +1,6 @@
 {
   "name": "steelseries-wireless-battery-tray",
-  "version": "2.0.0-beta",
+  "version": "2.0.0-newerHeadsetsBeta",
   "description": "A system tray (notification area) app that displays battery percentages of Steelseries wireless headphones.",
   "main": "main.js",
   "scripts": {
