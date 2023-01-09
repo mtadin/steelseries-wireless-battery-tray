@@ -32,11 +32,11 @@ const readDeviceData = () => {
           let deviceData = [];
 
           try {
-            device.write([0x06, 0x12]);
+            device.write([0x06, 0x18]);
             deviceData = device.readSync();
 
-            if (deviceData[3] > 0) {
-              deviceList.set(product, `${String(deviceData[3])}%`);
+            if (deviceData[2] > 0) {
+              deviceList.set(product, `${String(deviceData[2])}%`);
             } else {
               deviceList.set(product, `xx`);
             }
