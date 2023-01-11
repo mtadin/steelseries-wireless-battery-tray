@@ -110,5 +110,5 @@ app.on("ready", async () => {
 
   setInterval(() => {
     mainFunction(tray);
-  }, 1000);
+  }, 60000);
 });
