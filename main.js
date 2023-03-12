@@ -10,8 +10,8 @@ const isMac = process.platform === "darwin";
 
 const fontPath = path.join(__dirname, "Fipps-Regular.fnt");
 
-const iconPath = path.join(__dirname, "battery-fill.png");
-const editedIconPath = path.join(__dirname, "edited-icon.png");
+const iconPath = path.join(__dirname, "icons", "battery-fill.png");
+const editedIconPath = path.join(__dirname, "icons", "edited-icon.png");
 
 let deviceList = new Map();
 
@@ -41,7 +41,8 @@ const readDeviceData = () => {
               deviceList.set(product, `xx`);
             }
           } catch (e) {
-            console.error("ERROR while writing data:", e);
+            console.error("Error while writing data:", e);
+            device.close();
           }
 
           device.close();
@@ -92,7 +93,7 @@ const updateTrayIcon = async () => {
 
     Jimp.loadFont(fontPath).then((font) => {
       image.print(font, 4, 4, deviceList.get(deviceToDisplay));
-      image.write("edited-icon.png");
+      image.write(editedIconPath);
     });
   });
 };
