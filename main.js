@@ -6,12 +6,10 @@ const path = require("path");
 const Store = require("electron-store");
 
 const store = new Store();
-const isMac = process.platform === "darwin";
 
 const fontPath = path.join(__dirname, "Fipps-Regular.fnt");
-
 const iconPath = path.join(__dirname, "icons", "battery-fill.png");
-const editedIconPath = path.join(__dirname, "icons", "edited-icon.png");
+const editedIconPath = path.join(app.getPath("userData"), "edited-icon.png");
 
 let deviceList = new Map();
 
@@ -28,6 +26,23 @@ const tryProtocol = (device, protocol) => {
   return data.length && data[protocol.byte] > 0 ? data[protocol.byte] : null;
 };
 
+const readBattery = (device, devicePath) => {
+  const cachedIndex = protocolCache.get(devicePath);
+  const order =
+    cachedIndex != null
+      ? [cachedIndex, ...[...PROTOCOLS.keys()].filter((i) => i !== cachedIndex)]
+      : [...PROTOCOLS.keys()];
+
+  for (const i of order) {
+    const result = tryProtocol(device, PROTOCOLS[i]);
+    if (result != null) {
+      protocolCache.set(devicePath, i);
+      return result;
+    }
+  }
+  return null;
+};
+
 const readDeviceData = () => {
   const devices = HID.devices().filter(
     (device) =>
@@ -36,56 +51,45 @@ const readDeviceData = () => {
       device.usage !== 1,
   );
 
-  if (devices.length > 0) {
-    devices.forEach(({ path, product }) => {
-      if (path) {
+  if (devices.length === 0) {
+    deviceList = new Map([["No devices detected.", ""]]);
+    return;
+  }
+
+  const next = new Map();
+  devices.forEach(({ path: devicePath, product }) => {
+    if (!devicePath) return;
+
+    let device;
+    try {
+      device = new HID.HID(devicePath);
+      const battery = readBattery(device, devicePath);
+      next.set(product, battery != null ? `${battery}%` : "xx");
+    } catch (error) {
+      console.error("Error while reading battery percentage:", error);
+    } finally {
+      if (device) {
         try {
-          const device = new HID.HID(path);
-
-          try {
-            const cachedIndex = protocolCache.get(path);
-            const order =
-              cachedIndex != null
-                ? [cachedIndex, ...PROTOCOLS.keys()].filter(
-                    (i, pos) => pos === 0 || i !== cachedIndex,
-                  )
-                : [...PROTOCOLS.keys()];
-
-            let battery = null;
-            for (const i of order) {
-              const result = tryProtocol(device, PROTOCOLS[i]);
-              if (result != null) {
-                battery = result;
-                protocolCache.set(path, i);
-                break;
-              }
-            }
-
-            if (battery != null) {
-              deviceList.set(product, `${String(battery)}%`);
-            } else {
-              deviceList.set(product, `xx`);
-            }
-          } catch (e) {
-            console.error("Error while writing data:", e);
-            device.close();
-          }
-
           device.close();
         } catch (error) {
-          console.error("Error while getting battery percentage: ", error);
+          console.error("Error while closing device:", error);
         }
       }
-    });
-  } else {
-    deviceList.clear();
-    deviceList.set("No devices detected.", "");
-  }
+    }
+  });
+
+  deviceList = next;
+};
+
+const resolveDisplay = () => {
+  const stored = store.get("display");
+  return stored && deviceList.has(stored)
+    ? stored
+    : deviceList.keys().next().value;
 };
 
 const buildContextMenu = (tray) => {
-  const deviceToDisplay =
-    store.get("display") || deviceList.keys().next().value;
+  const deviceToDisplay = resolveDisplay();
 
   tray.setContextMenu(
     Menu.buildFromTemplate([
@@ -104,34 +108,33 @@ const buildContextMenu = (tray) => {
       }),
       {
         label: "Quit",
-        role: isMac ? "close" : "quit",
+        role: "quit",
       },
     ]),
   );
 };
 
 const updateTrayIcon = async () => {
-  const deviceToDisplay =
-    store.get("display") || deviceList.keys().next().value;
+  const text = deviceList.get(resolveDisplay());
+  if (!text) return;
 
-  await Jimp.read(iconPath, (error, image) => {
-    if (error) throw error;
+  const [image, font] = await Promise.all([
+    Jimp.read(iconPath),
+    Jimp.loadFont(fontPath),
+  ]);
 
-    Jimp.loadFont(fontPath).then((font) => {
-      image.print(font, 4, 4, deviceList.get(deviceToDisplay));
-      image.write(editedIconPath);
-    });
-  });
+  image.print(font, 4, 4, text);
+  await image.writeAsync(editedIconPath);
 };
 
-const mainFunction = (tray) => {
+const mainFunction = async (tray) => {
   readDeviceData();
   buildContextMenu(tray);
-  updateTrayIcon();
+  await updateTrayIcon();
   tray.setImage(fs.existsSync(editedIconPath) ? editedIconPath : iconPath);
 };
 
-app.on("ready", async () => {
+app.on("ready", () => {
   const tray = new Tray(iconPath);
   mainFunction(tray);
 
