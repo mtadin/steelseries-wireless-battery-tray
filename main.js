@@ -15,12 +15,25 @@ const editedIconPath = path.join(__dirname, "icons", "edited-icon.png");
 
 let deviceList = new Map();
 
+const READ_TIMEOUT = 500;
+const PROTOCOLS = [
+  { command: [0x06, 0x12], byte: 3 }, // newer headsets, try first
+  { command: [0x06, 0x18], byte: 2 }, // older headsets, fallback
+];
+const protocolCache = new Map();
+
+const tryProtocol = (device, protocol) => {
+  device.write(protocol.command);
+  const data = device.readTimeout(READ_TIMEOUT);
+  return data.length && data[protocol.byte] > 0 ? data[protocol.byte] : null;
+};
+
 const readDeviceData = () => {
   const devices = HID.devices().filter(
     (device) =>
       device.manufacturer &&
       device.manufacturer.toUpperCase().includes("STEELSERIES") &&
-      device.usage !== 1
+      device.usage !== 1,
   );
 
   if (devices.length > 0) {
@@ -29,14 +42,27 @@ const readDeviceData = () => {
         try {
           const device = new HID.HID(path);
 
-          let deviceData = [];
-
           try {
-            device.write([0x06, 0x18]);
-            deviceData = device.readSync();
+            const cachedIndex = protocolCache.get(path);
+            const order =
+              cachedIndex != null
+                ? [cachedIndex, ...PROTOCOLS.keys()].filter(
+                    (i, pos) => pos === 0 || i !== cachedIndex,
+                  )
+                : [...PROTOCOLS.keys()];
 
-            if (deviceData[2] > 0) {
-              deviceList.set(product, `${String(deviceData[2])}%`);
+            let battery = null;
+            for (const i of order) {
+              const result = tryProtocol(device, PROTOCOLS[i]);
+              if (result != null) {
+                battery = result;
+                protocolCache.set(path, i);
+                break;
+              }
+            }
+
+            if (battery != null) {
+              deviceList.set(product, `${String(battery)}%`);
             } else {
               deviceList.set(product, `xx`);
             }
@@ -80,7 +106,7 @@ const buildContextMenu = (tray) => {
         label: "Quit",
         role: isMac ? "close" : "quit",
       },
-    ])
+    ]),
   );
 };
 
