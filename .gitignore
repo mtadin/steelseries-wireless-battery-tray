@@ -1,4 +1,4 @@
-node_modules
-out
-example.png
-edited-icon.png
+# Go build output
+/steelseries-battery-tray
+/steelseries-battery-tray-*
+*.exe

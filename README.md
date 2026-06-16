@@ -1,43 +1,50 @@
 # steelseries-wireless-battery-tray
 
-A system tray (or notification area) app that displays battery percentages of Steelseries wireless devices.
+A system tray (notification area) app that displays the battery percentage of SteelSeries wireless devices, rendered directly onto the tray icon.
 
-I've bought an Arctis 7 headset on Cyber Monday a while back, and noticed that there is no way to get the actual battery percentage of the headset, except for a vague icon or the LED on the underside of the headset. So, as a little project I made this system tray application that displays the battery percentages of Steelseries wireless headsets on it.
+I bought an Arctis 7 headset on Cyber Monday a while back and noticed there was no way to read the actual battery percentage, only a vague icon or the LED on the underside. So I made this simple tray app.
 
-Currently only tested on Windows 10 with an Arctis 7 headset. If you have other devices or operating system, contact me to expand this.
+NOTE:
+This was originally an Electron app, which I wrote a long time ago. After fixing some major issues it had, I have used AI to rewrite it in Go for a much smaller, native single-binary build. As a result, the binary has reduced from 90MB to about 5MB.
 
-# [releases](https://github.com/mtadin/steelseries-wireless-battery-tray/releases)
+# releases
 
-Currently only a Windows .zip is available. Unzip it at a location of your choice and [add the .exe to your startup folder.](https://support.microsoft.com/en-us/windows/add-an-app-to-run-automatically-at-startup-in-windows-10-150da165-dcd9-7230-517b-cf3c295d89dd)
+Prebuilt binaries for Windows, macOS, and Linux are attached to each [release](https://github.com/mtadin/steelseries-wireless-battery-tray/releases). Download the one for your OS and run it, the icon should appear in your tray. Click it to pick which device to display in case of multiple devices, or to quit.
 
-### beta release
+The binaries are unsigned, and will remain that way unless I become a millionaire.
 
-The releases tab has a 2.0.0-beta version which includes a dynamic icon that displays the percentage for the chosen device on the icon itself.
+# building from source
 
-Someday when I rewrite the app and add tests I will also add releases for other operating systems. Someday.
+Requires [Go](https://go.dev/dl/) 1.22+ and a C compiler (cgo is needed for HID and tray access).
+
+```
+go build -o steelseries-battery-tray .
+```
+
+Linux also needs the tray and HID development headers:
+
+```
+sudo apt-get install libayatana-appindicator3-dev libgtk-3-dev libudev-dev
+```
+
+# linux: HID permissions
+
+On Linux, raw HID access needs a udev rule, otherwise the app reports "No devices detected." Create `/etc/udev/rules.d/99-steelseries.rules` with:
+
+```
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1038", MODE="0660", TAG+="uaccess"
+```
+
+Then reload and replug the device:
+
+```
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
 
 # limitations
 
-The underlying library used to read device data unfortunately cannot read data from [mice and keyboards due to a security precaution.](https://github.com/node-hid/node-hid#devices-node-hid-cannot-read)
+### The underlying HID library cannot read data from mice and keyboards, as macOS and Windows block reading those device types as a security precaution.
 
-# installation
-
-Requires [node.js](https://nodejs.org/en/) installed on your computer.
-
-After downloading the project, navigate to the folder containing it and run these commands in your terminal:
-
-```
-npm install
-```
-
-and
-
-```
-npm run make
-```
-
-When it finishes compiling, navigate to the 'out/steelseries-wireless-battery-tray' folder and run the .exe, or [add it to your startup folder](https://support.microsoft.com/en-us/windows/add-an-app-to-run-automatically-at-startup-in-windows-10-150da165-dcd9-7230-517b-cf3c295d89dd).
-
-The battery icon should appear in your system tray, and it should display a tooltip containing the battery percentage of your connected device. If you have multiple devices, clicking on the icon brings up a menu which allows you to choose which device should be displayed, or to exit and turn off the application.
+Tested with an Arctis 7 headset. Other SteelSeries wireless headsets that use the same battery read protocols should work with the new Go app, unless SteelSeries decides to change what is needed to read the battery percentage with a new generation of devices.
 
 ![example](https://github.com/mtadin/steelseries-wireless-battery-tray/blob/master/example.png?raw=true)

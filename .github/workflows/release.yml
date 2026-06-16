@@ -1,0 +1,51 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, goos: windows, goarch: amd64, ext: ".exe" }
+          - { os: macos-latest, goos: darwin, goarch: arm64, ext: "" }
+          - { os: macos-13, goos: darwin, goarch: amd64, ext: "" }
+          - { os: ubuntu-latest, goos: linux, goarch: amd64, ext: "" }
+    runs-on: ${{ matrix.os }}
+    env:
+      CGO_ENABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      # Linux needs the systray (AppIndicator/GTK) and HID (udev) build headers.
+      - name: Install Linux build deps
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libayatana-appindicator3-dev libgtk-3-dev libudev-dev
+
+      - name: Build
+        run: go build -v -o "steelseries-battery-tray-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}" .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: steelseries-battery-tray-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: steelseries-battery-tray-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: steelseries-battery-tray-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
