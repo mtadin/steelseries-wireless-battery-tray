@@ -27,6 +27,12 @@ Linux also needs the tray and HID development headers:
 sudo apt-get install libayatana-appindicator3-dev libgtk-3-dev libudev-dev
 ```
 
+On Fedora:
+
+```
+sudo dnf install libayatana-appindicator-gtk3-devel gtk3-devel systemd-devel
+```
+
 # linux: HID permissions
 
 On Linux, raw HID access needs a udev rule, otherwise the app reports "No devices detected." Create `/etc/udev/rules.d/99-steelseries.rules` with:
