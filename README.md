@@ -35,11 +35,13 @@ sudo dnf install libayatana-appindicator-gtk3-devel gtk3-devel systemd-devel
 
 # linux: HID permissions
 
-On Linux, raw HID access needs a udev rule, otherwise the app reports "No devices detected." Create `/etc/udev/rules.d/99-steelseries.rules` with:
+On Linux, raw HID access needs a udev rule, otherwise the app reports "No devices detected." Create `/etc/udev/rules.d/70-steelseries.rules` with:
 
 ```
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1038", MODE="0660", TAG+="uaccess"
 ```
+
+> This must be any number under 71, since 71-seat.rules and 73-seat-late.rules turn the `uaccess` tag into a permission for the logged in user, so a rule that sorts after them appears to work after a manual trigger but breaks when rebooted.
 
 Then reload and replug the device:
 
